@@ -48,7 +48,10 @@ fn main() {
 }
 fn process_monitors(monitors: &mut Monitors) {
     let current_time = SystemTime::now(); 
-    update_monitors(monitors); 
+    let now = SystemTime::now();
+    let since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
+    let processed_at = since_epoch.as_secs();
+    update_monitors(monitors,processed_at); 
     
     loop {
         let elapsed_time = match current_time.elapsed() {
@@ -60,19 +63,17 @@ fn process_monitors(monitors: &mut Monitors) {
         };
         
         if elapsed_time >= Duration::from_secs(60) {
-            store_monitors(monitors); 
+            store_monitors(monitors,processed_at); 
             break; 
         } else {
             thread::sleep(Duration::from_millis(1))
         }
     }
 }
-fn update_monitors(monitors: &mut Monitors) {
+fn update_monitors(monitors: &mut Monitors,processed_at: u64) {
         for monitor in &mut monitors.monitors {
             let value = rand::thread_rng().gen_range(0..100);
-            let now = SystemTime::now();
-            let since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
-            let processed_at = since_epoch.as_secs();
+
             
             let result = Result {
                 value,
@@ -84,11 +85,8 @@ fn update_monitors(monitors: &mut Monitors) {
 
 }
 
-fn store_monitors(monitors: &Monitors) {
+fn store_monitors(monitors: &Monitors,processed_at: u64) {
 
-        let now = SystemTime::now();
-        let since_epoch = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
-        let processed_at = since_epoch.as_secs();
 
         let filename = format!("{}_monitors.json", processed_at);
 
